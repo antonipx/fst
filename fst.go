@@ -7,6 +7,7 @@ import (
     "time"
     "flag"
     "math"
+//    "syscall"
 )
 
 var root string
@@ -15,6 +16,17 @@ var dirs int
 var files int
 var size int64
 var verbose bool
+var total float64
+var items float64
+
+func progress() {
+    var prev float64
+    for {
+        log.Printf("Created %.f/%.f %.1f%% %.f/s ", items, total, 100*(items/total), items-prev)
+        prev=items
+        time.Sleep(time.Second)
+    }
+}
 
 func make(lvl int, path string) {
     if lvl > levels  {
@@ -25,7 +37,12 @@ func make(lvl int, path string) {
         log.Printf("In %s lvl=%d", path, lvl)
     }
     
-    os.Mkdir(path, 0777)
+    err := os.Mkdir(path, 0777)
+    if err != nil && !os.IsExist(err) {
+        log.Fatal(err)
+    }
+
+    items++
     
     for d := 0; d < dirs; d++ {
         make(lvl + 1, path + "/d" + strconv.Itoa(d))
@@ -34,14 +51,18 @@ func make(lvl int, path string) {
     var fn string
     for f := 0; f < files; f++ {
         fn = path + "/f" + strconv.Itoa(f)
-        fd, _ := os.Create(fn)
+        fd, err := os.Create(fn)
+        if err != nil && !os.IsExist(err) {
+            log.Fatal(err)
+        }
         fd.Close()
         os.Truncate(fn, size)
+        items++
     }
 }
 
 func main() {
-    flag.StringVar(&root, "r", "./fstdata", "root dir")
+    flag.StringVar(&root, "r", "/px", "root dir")
     flag.IntVar(&levels, "l", 3, "levels")
     flag.IntVar(&dirs, "d", 10, "subdirs to create on each level")
     flag.IntVar(&files, "f", 10, "files to create on each level")
@@ -49,7 +70,6 @@ func main() {
     flag.BoolVar(&verbose, "v", false, "Verbose")
     flag.Parse()
 
-    var total float64
     for i:=1; i<=levels; i++ {
         total+=math.Pow(float64(dirs), float64(i))
     }
@@ -57,7 +77,11 @@ func main() {
     log.Printf("Start in %s, Levels=%d, Dirs=%d, Files=%d, Total~%.f", root, levels, dirs, files, total)
 
     start := time.Now()
-    os.MkdirAll(root, 0777)
+    err := os.MkdirAll(root, 0777)
+    if err != nil && !os.IsExist(err) {
+        log.Fatal(err)
+    }
+    go progress()
     make(0, root)
     log.Printf("Finished, %s", time.Now().Sub(start).String())
 }
