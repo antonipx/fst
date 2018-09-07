@@ -6,6 +6,7 @@ import (
     "strconv"
     "time"
     "flag"
+    "math"
 )
 
 var root string
@@ -47,7 +48,14 @@ func main() {
     flag.Int64Var(&size, "s", 1024*1024*1024, "sparse file size to create")
     flag.BoolVar(&verbose, "v", false, "Verbose")
     flag.Parse()
-    log.Printf("Start in %s, Levels=%d, Dirs=%d, Files=%d Size=%d", root, levels, dirs, files, size)
+
+    var total float64
+    for i:=1; i<=levels; i++ {
+        total+=math.Pow(float64(dirs), float64(i))
+    }
+    total=total*float64(files+1)
+    log.Printf("Start in %s, Levels=%d, Dirs=%d, Files=%d, Total~%.f", root, levels, dirs, files, total)
+
     start := time.Now()
     os.MkdirAll(root, 0777)
     make(0, root)
