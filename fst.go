@@ -114,7 +114,7 @@ func main() {
     var op string
     var start time.Time
 
-    flag.StringVar(&root, "r", "/px", "root dir")
+    flag.StringVar(&root, "r", "./fstdata", "root dir")
     flag.IntVar(&levels, "l", 3, "levels")
     flag.IntVar(&dirs, "d", 10, "subdirs to create on each level")
     flag.IntVar(&files, "f", 10, "files to create on each level")
