@@ -16,10 +16,11 @@ var dirs int
 var files int
 var size int64
 var verbose bool
+var progress bool
 var total float64
 var items float64
 
-func progress(what string, ch chan int) {
+func pp(what string, ch chan int) {
     var prev float64
     for {
         select {
@@ -113,6 +114,7 @@ func rm(path string) {
 func main() {
     var op string
     var start time.Time
+    var ch chan int
 
     flag.StringVar(&root, "r", "./fstdata", "root dir")
     flag.IntVar(&levels, "l", 3, "levels")
@@ -120,6 +122,7 @@ func main() {
     flag.IntVar(&files, "f", 10, "files to create on each level")
     flag.Int64Var(&size, "s", 1024*1024*1024, "sparse file size to create")
     flag.BoolVar(&verbose, "v", false, "Verbose")
+    flag.BoolVar(&progress, "p", false, "Display Progress")
     flag.StringVar(&op, "o", "a", "Operand c:create l:list d:delete a:all")
     flag.Parse()
 
@@ -127,7 +130,7 @@ func main() {
         total+=math.Pow(float64(dirs), float64(i))
     }
     total=total*float64(files+1)
-    log.Printf("Root=%s, Levels=%d, Dirs=%d, Files=%d, Total~%.f approx", root, levels, dirs, files, total)
+    log.Printf("Root=%s, Levels=%d, Dirs=%d, Files=%d, Total~%.f", root, levels, dirs, files, total)
 
     if op=="c" || op=="a" {
         log.Printf("Start Creating in %s", root)
@@ -137,10 +140,14 @@ func main() {
         if err != nil && !os.IsExist(err) {
             log.Fatal(err)
         }
-        ch := make(chan int)
-        go progress("Creating", ch)
+        if progress {
+            ch = make(chan int)
+            go pp("Creating", ch)
+        }
         mk(0, root)
-        close(ch)
+        if progress {
+            close(ch)
+        }
         log.Printf("Finished Creating, %s, Approx %.f/s", time.Now().Sub(start).String(), items/float64(time.Now().Sub(start).Seconds()))
     }
 
@@ -149,10 +156,14 @@ func main() {
         log.Printf("Start Listing in %s", root)
         start = time.Now()
         items = 0
-        ch := make(chan int)
-        go progress("Listing", ch)
+        if progress {
+            ch = make(chan int)
+            go pp("Listing", ch)
+        }
         ls(root)
-        close(ch)
+        if progress {
+            close(ch)
+        }
         log.Printf("Finished Listing, %s, Approx %.f/s", time.Now().Sub(start).String(), items/float64(time.Now().Sub(start).Seconds()))
     }
 
@@ -160,10 +171,14 @@ func main() {
         log.Printf("Start Deleting in %s", root)
         start = time.Now()
         items = 0
-        ch := make(chan int)
-        go progress("Deleting", ch)
+        if progress {
+            ch = make(chan int)
+            go pp("Deleting", ch)
+        }
         rm(root)
-        close(ch)
+        if progress {
+            close(ch)
+        }
         log.Printf("Finished Deleting, %s, Approx %.f/s", time.Now().Sub(start).String(), items/float64(time.Now().Sub(start).Seconds()))
     }
 }

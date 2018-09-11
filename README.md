@@ -1,7 +1,7 @@
 File System Torture
 ===================
 
-Create large directory trees with large amount of large (sparse) files.
+Benchmark creation, listing and removal of large file system directory trees.
 
 Usage
 =====
@@ -14,5 +14,6 @@ fst [-o op] [-r path] [-l levels] [-d dirs] [-f files] [-s sparse size] [-v]
   -d : subdirs to create on each level (default 10)
   -f : files to create on each level (default 10)
   -s : sparse file size to create (default 1GB)
-  -v : verbose
+  -p : display pgrogress every second
+  -v : verbose (print all file/folder names)
 ```
